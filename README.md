@@ -41,7 +41,7 @@ f.freeze
 f.long_calc # => FrozenError, can't set `@long_calc`
 ```
 
-Some techniques could include storing the cache in a mutable data structures:
+Some techniques could include storing the cache in a mutable data structure:
 
 ```ruby
 class Foo
@@ -75,6 +75,8 @@ This gem will:
 - prebuild the cache,
 - not write to the cache,
 - (or maybe use a separate Ractor / `SharedHash`)
+
+Implementation details pexplained here](hacker_guide.md)
 
 ## Contributing
 
