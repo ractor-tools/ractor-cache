@@ -1,39 +1,84 @@
 # Ractor::Cache
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/ractor/cache`. To experiment with that code, run `bin/console` for an interactive prompt.
-
-TODO: Delete this and the text above, and describe your gem
-
-## Installation
-
-Add this line to your application's Gemfile:
+## Usage:
 
 ```ruby
-gem 'ractor-cache'
+# Typical cached method:
+class Foo
+  def long_calc
+    @long_calc ||= do_long_calculation
+  end
+end
+
+# With Ractor::Cache:
+using Ractor::Cache
+
+class Foo
+  cache def long_calc
+    do_long_calculation
+  end
+end
 ```
 
-And then execute:
+## Why?
 
-    $ bundle install
+0) It's pretty
+1) It makes your class `Ractor`-compatible
 
-Or install it yourself as:
+## `Ractor`-compatible?
 
-    $ gem install ractor-cache
+Ractor is new in Ruby 3.0 and is awesome.
 
-## Usage
+Passing classes between Ractors can be done very efficiently if classes are deeply frozen.
 
-TODO: Write usage instructions here
+For some classes, being frozen isn't useful or possible (e.g. `IO`), but for many it is possible.
 
-## Development
+One challenge of writing classes that can be deeply frozen is methods that cache the results:
 
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
+```ruby
+f = Foo.new
+f.freeze
+f.long_calc # => FrozenError, can't set `@long_calc`
+```
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and tags, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+Some techniques could include storing the cache in a mutable data structures:
+
+```ruby
+class Foo
+  def initialize
+    @cache = {}
+  end
+
+  def long_calc
+    @cache[:long_calc] ||= # ...
+  end
+end
+
+f = Foo.new
+f.freeze
+f.long_calc # => ok
+```
+
+But `Ractor.make_shareable` freezes the instance variables too, so this can't work:
+
+```ruby
+f = Foo.new
+Ractor.make_shareable(foo)
+foo.long_calc # => `FrozenError`, @cache is frozen
+```
+
+## How to resolve this
+
+This gem will:
+1) Use a mutable data structure like above, which means no issue for shallow freezing an instance
+2) If an instance is deeply frozen, the gem will either insure things will keep working by applying any of the following strategies:
+- prebuild the cache,
+- not write to the cache,
+- (or maybe use a separate Ractor / `SharedHash`)
 
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/marcandre/ractor-cache. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [code of conduct](https://github.com/marcandre/ractor-cache/blob/master/CODE_OF_CONDUCT.md).
-
 
 ## License
 

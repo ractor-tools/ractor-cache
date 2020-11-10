@@ -1,8 +1,18 @@
-require "ractor/cache/version"
+# frozen_string_literal: true
 
-module Ractor
+require 'require_relative_dir'
+using RequireRelativeDir
+
+class Ractor
   module Cache
-    class Error < StandardError; end
-    # Your code goes here...
+    require_relative_dir
+
+    private def cache(method_name, strategy: nil)
+      CachingLayer[self].cache(method_name, strategy: strategy)
+    end
+
+    refine Module do
+      include Cache
+    end
   end
 end

@@ -1,0 +1,54 @@
+AllCops:
+  DisplayCopNames: true
+  TargetRubyVersion: 2.4
+  NewCops: enable
+
+# For sure
+
+Layout/LineLength:
+  Max: 150
+
+Style/ModuleFunction:
+  EnforcedStyle: extend_self
+
+Style/TrailingCommaInArrayLiteral:
+  EnforcedStyleForMultiline: consistent_comma
+Style/TrailingCommaInHashLiteral:
+  EnforcedStyleForMultiline: consistent_comma
+
+Layout/SpaceInsideHashLiteralBraces:
+  EnforcedStyle: no_space
+
+Metrics/BlockLength:
+  Exclude:
+    - 'spec/**/*.rb'
+
+Style/Documentation:
+  Enabled: false
+
+Gemspec/RequiredRubyVersion:
+  Enabled: false
+
+Layout/MultilineBlockLayout:
+  Enabled: false
+Layout/BlockEndNewline:
+  Enabled: false
+
+Style/CommentedKeyword:
+  Enabled: false
+
+Style/NilComparison:
+  EnforcedStyle: comparison
+
+# Experiment
+
+Style/AccessModifierDeclarations:
+  EnforcedStyle: inline
+
+
+
+# Layout/SpaceBeforeBlockBraces:
+#   EnforcedStyleForEmptyBraces: no_space
+
+Style/DocumentDynamicEvalDefinition:
+  Enabled: false
