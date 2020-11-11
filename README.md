@@ -23,7 +23,9 @@ end
 ## Why?
 
 0) It's pretty
-1) It makes your class `Ractor`-compatible
+1) Handles `nil` / `false` results
+2) Works even for frozen instances
+3) It makes your class `Ractor`-compatible
 
 ## `Ractor`-compatible?
 
