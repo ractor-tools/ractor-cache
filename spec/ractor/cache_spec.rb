@@ -51,4 +51,16 @@ RSpec.describe Ractor::Cache do
       expect(complex(-1)).to eq [[:complex, 42], [:complex, -1], [:complex, -1]]
     end
   end
+
+  context 'with results `nil`' do
+    let(:nihilist) { Nihilist.new }
+    it 'caches them properly' do
+      nihilist.simple
+      nihilist.simple
+      nihilist.complex(42)
+      nihilist.complex(-1)
+      nihilist.complex(42)
+      expect(nihilist.calls).to eq %i[simple complex complex]
+    end
+  end
 end

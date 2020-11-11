@@ -42,3 +42,15 @@ class Ape < Mammal
   end
   cache :complex, strategy: :disable
 end
+
+class Nihilist < Base
+  cache def simple
+    record
+    nil
+  end
+
+  cache def complex(_arg)
+    record
+    nil
+  end
+end
