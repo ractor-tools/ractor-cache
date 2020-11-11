@@ -73,10 +73,10 @@ foo.long_calc # => `FrozenError`, @cache is frozen
 
 This gem will:
 1) Use a mutable data structure like above, which means no issue for shallow freezing an instance
-2) If an instance is deeply frozen, the gem will either insure things will keep working by applying any of the following strategies:
-- prebuild the cache,
-- not write to the cache,
-- (or maybe use a separate Ractor / `SharedHash`)
+2) If an instance is deeply frozen, the gem will insure things will keep working by applying one of the following strategies:
+- prebuild the cache before the deep-freeze,
+- not write to the cache anymore,
+- (potential upcomming strategy: use a separate Ractor / `SharedHash`)
 
 Implementation details [explained here](hacker_guide.md)
 
