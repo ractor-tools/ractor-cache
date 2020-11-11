@@ -2,7 +2,7 @@
 
 using Ractor::Cache
 
-class Animal
+class Base
   def calls
     self.class.registry[self]
   end
@@ -13,16 +13,18 @@ class Animal
     (calls << value).dup
   end
 
+  def self.registry
+    @registry ||= Hash.new { |h, k| h[k] = [] }.compare_by_identity
+  end
+end
+
+class Animal < Base
   cache def something
     record
   end
 
   cache def something_else
     record
-  end
-
-  def self.registry
-    @registry ||= Hash.new { |h, k| h[k] = [] }.compare_by_identity
   end
 end
 
