@@ -78,7 +78,7 @@ This gem will:
 - not write to the cache,
 - (or maybe use a separate Ractor / `SharedHash`)
 
-Implementation details pexplained here](hacker_guide.md)
+Implementation details [explained here](hacker_guide.md)
 
 ## Contributing
 

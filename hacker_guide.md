@@ -34,8 +34,6 @@ Equivalent code:
 ```
 class Animal
   module RactorCacheLayer
-    CACHED = ... # private information of how things are cached
-
     # Where caching info is stored for `Animal`
     class Store
       def initialize(owner)
@@ -85,8 +83,6 @@ end
 
 class Ape < Mammal
   module RactorCacheLayer
-    CACHED = ... # private array of Strategy
-
     # Where caching info is stored for `Ape`
     class Store < Animal::CacheLayer::Store
       attr_reader :complex
@@ -136,8 +132,11 @@ Ape.ancestors # =>
 ]
 ```
 
+(Handling of `nil` / `false` not shown for simplicity)
+
 ### Class ancestors
 
 In the "equivalent" code above, `Animal::CacheLayer` is actually an instance of `Ractor::Cache::CacheLayer`.
 
 `Animal::CacheLayer::Store` is a subclass of `Ractor::Cache::Store`
+
