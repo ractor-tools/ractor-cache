@@ -62,5 +62,14 @@ RSpec.describe Ractor::Cache do
       nihilist.complex(42)
       expect(nihilist.calls).to eq %i[simple complex complex]
     end
+
+    it 'is shareable' do
+      nihilist.simple
+      nihilist.complex(42)
+      Ractor.make_shareable(nihilist)
+      expect(nihilist.simple).to be_nil
+      expect(nihilist.complex(42)).to be_nil
+      expect(nihilist.complex(-1)).to be_nil
+    end
   end
 end
