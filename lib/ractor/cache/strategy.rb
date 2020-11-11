@@ -2,6 +2,8 @@
 
 class Ractor
   module Cache
+    EMPTY_CACHE = Class.new.freeze # lazy way to get a name
+
     module Strategy
       class Base
         attr_reader :parameters, :method_name
@@ -12,7 +14,8 @@ class Ractor
         end
 
         def compile_store_init
-          "@#{method_name} = {}" if @has_arguments
+          init = @has_arguments ? "Hash.new { #{EMPTY_CACHE} }" : EMPTY_CACHE
+          "@#{method_name} = #{init}"
         end
 
         private def analyse_parameters(parameters) # rubocop:disable Metrics/CyclomaticComplexity, Metrics/MethodLength
@@ -53,7 +56,7 @@ class Ractor
       class Prebuild < Base
         def initialize(*)
           super
-          raise "Can not cache method #{method_name} by prebuilding because it accepts arguments" if @has_arguments
+          raise ArgumentError, "Can not cache method #{method_name} by prebuilding because it accepts arguments" if @has_arguments
         end
 
         def deep_freeze_callback(instance)
@@ -63,7 +66,10 @@ class Ractor
         def compile_accessor
           <<~RUBY
             def #{method_name}(#{signature})
-              ractor_cache.#{method_name} ||= super
+              r = ractor_cache.#{method_name}
+              return r unless r == EMPTY_CACHE
+
+              ractor_cache.#{method_name} = super
             end
           RUBY
         end
@@ -73,11 +79,12 @@ class Ractor
         def compile_accessor
           <<~RUBY
             def #{method_name}(#{signature})
-              ractor_cache.#{method_name}#{compile_lookup} || begin
-                result = super
-                ractor_cache.#{method_name}#{compile_lookup} = result unless ractor_cache.frozen?
-                result
-              end
+              r = ractor_cache.#{method_name}#{compile_lookup}
+              return r unless r == EMPTY_CACHE
+
+              r = super
+              ractor_cache.#{method_name}#{compile_lookup} = r unless ractor_cache.frozen?
+              r
             end
           RUBY
         end
@@ -104,7 +111,7 @@ class Ractor
         )                    # => Strategy
           self[strategy || :prebuild].new(to_cache)
         rescue ArgumentError
-          return new(:prebuild, to_cache: to_cache) if strategy == nil
+          return new(:disable, to_cache: to_cache) if strategy == nil
 
           raise
         end
