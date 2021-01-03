@@ -5,13 +5,16 @@ on: [pull_request]
 jobs:
   tests:
     name: >-
-      Specs | ${{ matrix.ruby }}
+      Specs ${{ matrix.with_backports }} | ${{ matrix.ruby }}
     runs-on: ${{ matrix.os }}-latest
     strategy:
       fail-fast: false
       matrix:
         os: [ ubuntu ]
-        ruby: [ 2.4, 2.5, 2.6, 2.7, head ]
+        ruby: [ 2.4, 2.5, 2.6, 2.7, 3.0, head ]
+        with_backports: [ null ]
+        include:
+          - { os: ubuntu, ruby: 2.7, with_backports: '(with Backports)' }
     steps:
       - name: checkout
         uses: actions/checkout@v2
@@ -19,6 +22,9 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
+      - name: setup Env
+        if: matrix.with_backports
+        run: echo "B=true" >> $GITHUB_ENV
       - name: install dependencies
         run: bundle install --jobs 3 --retry 3
       - name: spec

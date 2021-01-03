@@ -64,6 +64,9 @@ Layout/EmptyLineAfterMagicComment:
 Style/MutableConstant:
   Enabled: false # https://github.com/rubocop-hq/rubocop/issues/9328
 
+Lint/UselessAssignment:
+  Enabled: false # https://github.com/rubocop-hq/rubocop/issues/9330
+
 Layout/HashAlignment:
   Exclude:
     - 'lib/ractor/cache/cached_method.rb'

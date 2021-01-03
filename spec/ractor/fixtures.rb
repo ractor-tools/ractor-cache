@@ -40,7 +40,7 @@ class Ape < Mammal
   def complex(arg)
     record(arg)
   end
-  cache :complex, strategy: :disable
+  cache :complex
 end
 
 class Nihilist < Base

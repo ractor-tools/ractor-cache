@@ -3,18 +3,57 @@
 class Ractor
   module Cache
     module CachingLayer
-      def freeze
-        ractor_cache # Make sure the instance variable is created beforehand
-        super
-      end
+      use_ractor_storage = defined?(Ractor.current) && # check we are not running Backports on a Ruby that is compatible:
+                           begin
+                             (::ObjectSpace::WeakMap.new[Object.new.freeze] = []) # Ruby 2.6- didn't work with frozen keys
+                           rescue FrozenError
+                             false
+                           end
 
-      private def ractor_cache
-        @ractor_cache ||= self.class::Store.new(self)
+      if use_ractor_storage
+        private def ractor_cache
+          CachingLayer.ractor_storage[self] ||= self.class::Store.new
+        end
+      else
+        def freeze
+          ractor_cache
+          super
+        end
+
+        private def ractor_cache
+          @ractor_cache ||= self.class::Store.new
+        end
       end
 
       class << self
+        def ractor_storage
+          Ractor.current[:RactorCacheLocalStore] ||= ::ObjectSpace::WeakMap.new
+        end
+
         attr_reader :sublayer, :cached, :parent
 
+        def cache(method_name)
+          cm = cached_method(method_name)
+
+          file, line = cm.method(:compile_method).source_location
+          module_eval(cm.compile_method, file, line + 2)
+          @cached << cm
+          update_store_methods(self::Store)
+        end
+
+        private def update_store_methods(store)
+          init = @cached.map(&:compile_initializer).join("\n")
+
+          store.class_eval <<~RUBY, __FILE__, __LINE__ + 1
+            def initialize
+              #{init}
+            end
+
+            #{@cached.last.compile_accessor}
+          RUBY
+        end
+
+        # @api private
         def attach(mod, sublayer)
           @sublayer = sublayer
           @cached = []
@@ -26,29 +65,14 @@ class Ractor
           self
         end
 
-        def cache(method, strategy:)
-          strat = build_stragegy(method, strategy)
-          file, line = strat.method(:compile_accessor).source_location
-          module_eval(strat.compile_accessor, file, line + 2)
-          @cached << strat
-          self::Store.update(@cached)
-        end
-
-        def deep_freeze_callback(instance)
-          @cached.each do |strategy|
-            strategy.deep_freeze_callback(instance)
-          end
-          sublayer&.deep_freeze_callback(instance)
-        end
-
-        # @returns [Strategy]
-        private def build_stragegy(method, strategy)
+        # @returns [CachedMethod]
+        private def cached_method(method_name)
           im = begin
-            @parent.instance_method(method)
+            @parent.instance_method(method_name)
           rescue ::NameError => e
             raise e, "#{e.message}. Method must be defined before calling `cache`", e.backtrace
           end
-          Strategy.new(strategy, to_cache: im)
+          CachedMethod.new(im)
         end
 
         # Return `CachingLayer` in `mod`, creating it if need be.
