@@ -7,8 +7,8 @@ class Ractor
   module Cache
     require_relative_dir
 
-    private def cache(method_name, strategy: nil)
-      CachingLayer[self].cache(method_name, strategy: strategy)
+    private def cache(method_name)
+      CachingLayer[self].cache(method_name)
     end
 
     refine Module do

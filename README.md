@@ -25,9 +25,9 @@ end
 0) It's pretty
 1) Handles `nil` / `false` results
 2) Works even for frozen instances
-3) It makes your class `Ractor`-compatible
+3) Works even for deeply frozen instances (`Ractor`-shareable).
 
-## `Ractor`-compatible?
+## `Ractor`-shareable?
 
 Ractor is new in Ruby 3.0 and is awesome.
 
@@ -71,12 +71,7 @@ foo.long_calc # => `FrozenError`, @cache is frozen
 
 ## How to resolve this
 
-This gem will:
-1) Use a mutable data structure like above, which means no issue for shallow freezing an instance
-2) If an instance is deeply frozen, the gem will insure things will keep working by applying one of the following strategies:
-- prebuild the cache before the deep-freeze,
-- not write to the cache anymore,
-- (potential upcomming strategy: use a separate Ractor / `SharedHash`)
+This gem will use associate a mutable data structure to the instance. Even if deeply-frozen it can still mutate the data structure. The data is Ractor-local, so it won't be shared and won't cause issues. Internally a `WeakMap` is used to make sure objects are still garbage collected as they should.
 
 Implementation details [explained here](hacker_guide.md)
 

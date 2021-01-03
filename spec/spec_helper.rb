@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'bundler/setup'
+require 'backports/3.0.0/ractor' if ENV['B']
 require 'ractor/cache'
 
 RSpec.configure do |config|

@@ -1,5 +1,7 @@
 ### Structure
 
+(Code simplified: handling of `nil` / `false` not shown for simplicity)
+
 ```ruby
 using Ractor::Cache
 
@@ -17,7 +19,7 @@ class Mammal < Animal
 end
 
 class Ape < Mammal
-  cache def something_else # Supported if same strategy and signature
+  cache def something_else
     return super unless a_predicate?
 
     # specialized calculation
@@ -26,7 +28,7 @@ class Ape < Mammal
   def complex(arg)
     # ... calculation
   def
-  cache :complex, strategy: :disable
+  cache :complex
 end
 ```
 
@@ -36,38 +38,23 @@ class Animal
   module RactorCacheLayer
     # Where caching info is stored for `Animal`
     class Store
-      def initialize(owner)
-        @owner = owner
+      def cached_something_or_init
+        @something ||= yield
       end
 
-      attr_accessor :something, :something_else
-
-      def freeze # only called in case of deep-freezing
-        @owner.class::RactorCacheLayer.deep_freeze_callback(@owner)
-        super
-      end
+      # same for something_else
     end
 
     def something
-      ractor_cache.something ||= super
-    end
-
-    def freeze
-      ractor_cache # make sure cache store is built
-      super
-    end
-
-    def self.deep_freeze_callback(instance)
-      # strategy for `something` is prebuild:
-      instance.something
-      # same for `something_else`:
-      instance.something_else
+      ractor_cache.cached_something_or_init { super }
     end
 
     private
 
     def ractor_cache
+      # similar to:
       @ractor_cache ||= self.class::Store.new
+      # but actually using a ractor-local WeakMap instead of an instance variable
     end
   end
   prepend CacheLayer
@@ -85,34 +72,21 @@ class Ape < Mammal
   module RactorCacheLayer
     # Where caching info is stored for `Ape`
     class Store < Animal::CacheLayer::Store
-      attr_reader :complex
-
-      def initialize(owner)
-        @complex = {}
-        super
+      def initilialize
+        @complex_fetch = {}
       end
-    end
 
-    def something_else
-      ractor_cache.something_else ||= super
+      def cached_complex_or_init(owner)
+        @complex_fetch[owner] ||= yield
+      end
     end
 
     def complex(arg)
-      hash = ractor_cache.complex
-      hash.fetch(arg) do
-        result = super
-        # strategy is disable:
-        hash[arg] = result unless frozen?
-        result
-      end
+      ractor_cache.cached_complex_or_init(arg) { super }
     end
 
-    def self.deep_freeze_callback(instance)
-      # strategy for `complex` is disable
-      # nothing to do
-      # process any other cached data
-      # and then
-      super
+    def something_else # refine again
+      ractor_cache.cached_something_else_or_init { super }
     end
   end
   prepend CacheLayer
@@ -130,13 +104,13 @@ Ape.ancestors # =>
   Animal,
   Object, #...
 ]
+
+m = Ape.instance_method(:something_else)
+# => #<UnboundMethod: Ape::CacheLayer#something_else()>
+m = m.super_method
+# => #<UnboundMethod: Ape#something_else()>
+m = m.super_method
+# => #<UnboundMethod: Animal::CacheLayer#something_else()>
+m = m.super_method
+# => #<UnboundMethod: Animal#something_else()>
 ```
-
-(Handling of `nil` / `false` not shown for simplicity)
-
-### Class ancestors
-
-In the "equivalent" code above, `Animal::CacheLayer` is actually an instance of `Ractor::Cache::CacheLayer`.
-
-`Animal::CacheLayer::Store` is a subclass of `Ractor::Cache::Store`
-
