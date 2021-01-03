@@ -3,6 +3,11 @@ AllCops:
   TargetRubyVersion: 2.4
   NewCops: enable
 
+# Export
+
+Lint/EmptyClass:
+  Enabled: false
+
 # For sure
 
 Layout/LineLength:
@@ -52,3 +57,13 @@ Style/AccessModifierDeclarations:
 
 Style/DocumentDynamicEvalDefinition:
   Enabled: false
+
+Layout/EmptyLineAfterMagicComment:
+  Enabled: false # https://github.com/rubocop-hq/rubocop/issues/9327
+
+Style/MutableConstant:
+  Enabled: false # https://github.com/rubocop-hq/rubocop/issues/9328
+
+Layout/HashAlignment:
+  Exclude:
+    - 'lib/ractor/cache/cached_method.rb'
