@@ -1,5 +1,13 @@
 # frozen_string_literal: true
 
+class SimpleApiExample
+  include Ractor::Cache
+
+  def foo
+    ractor_cache[:foo] ||= ($called += 1)
+  end
+end
+
 using Ractor::Cache
 
 class Base

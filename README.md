@@ -18,12 +18,21 @@ class Foo
     do_long_calculation
   end
 end
+
+# Lower level "manual" usage (discussed later):
+class Foo
+  include Ractor::Cache # => defines a `ractor_cache` method that returns a hash
+
+  def long_calc
+    ractor_cache[:long_calc] ||= do_long_calculation
+  end
+end
 ```
 
 ## Why?
 
 0) It's pretty
-1) Handles `nil` / `false` results
+1) Handles `nil` / `false` results ("manual" usage: DIY)
 2) Works even for frozen instances
 3) Works even for deeply frozen instances (`Ractor`-shareable).
 
@@ -71,7 +80,7 @@ foo.long_calc # => `FrozenError`, @cache is frozen
 
 ## How to resolve this
 
-This gem will use associate a mutable data structure to the instance. Even if deeply-frozen it can still mutate the data structure. The data is Ractor-local, so it won't be shared and won't cause issues. Internally a `WeakMap` is used to make sure objects are still garbage collected as they should.
+This gem will associate a mutable data structure to the instance. Even if deeply-frozen it can still mutate the data structure. The data is Ractor-local, so it won't be shared and won't cause issues. A `WeakMap` is used to make sure objects are still garbage collected as they should.
 
 Implementation details [explained here](hacker_guide.md)
 

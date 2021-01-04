@@ -7,12 +7,13 @@ class Ractor
   module Cache
     require_relative_dir
 
-    private def cache(method_name)
-      CachingLayer[self].cache(method_name)
-    end
+    CacheStore = ::Hash # By default, use a Hash
+    include CachingLayer
 
     refine Module do
-      include Cache
+      def cache(method_name)
+        CachingLayer[self].cache(method_name)
+      end
     end
   end
 end
