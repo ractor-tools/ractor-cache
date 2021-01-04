@@ -12,16 +12,16 @@ class Ractor
 
       if use_ractor_storage
         private def ractor_cache
-          CachingLayer.ractor_storage[self] ||= self.class::Store.new
+          CachingLayer.ractor_storage[self] ||= self.class::CacheStore.new
         end
       else
         def freeze
-          ractor_cache
+          ractor_cache # make sure cache is initialized before freezing
           super
         end
 
         private def ractor_cache
-          @ractor_cache ||= self.class::Store.new
+          @ractor_cache ||= self.class::CacheStore.new
         end
       end
 
@@ -38,7 +38,7 @@ class Ractor
           file, line = cm.method(:compile_method).source_location
           module_eval(cm.compile_method, file, line + 2)
           @cached << cm
-          update_store_methods(self::Store)
+          update_store_methods(self::CacheStore)
         end
 
         private def update_store_methods(store)
@@ -59,8 +59,8 @@ class Ractor
           @cached = []
           @parent = mod
           mod.prepend self
-          substore = sublayer&.const_get(:Store, false) || Cache::Store
-          const_set(:Store, Class.new(substore))
+          substore = sublayer&.const_get(:CacheStore, false) || Cache::Store
+          const_set(:CacheStore, Class.new(substore))
 
           self
         end

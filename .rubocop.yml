@@ -70,3 +70,7 @@ Lint/UselessAssignment:
 Layout/HashAlignment:
   Exclude:
     - 'lib/ractor/cache/cached_method.rb'
+
+Style/GlobalVars:
+  Exclude:
+    - 'spec/**/*.rb'

@@ -55,3 +55,16 @@ RSpec.describe Ractor::Cache do
     end
   end
 end
+
+RSpec.describe 'simple api' do
+  let(:obj) { SimpleApiExample.new }
+
+  it 'works even if frozen' do
+    $called = 0
+    deep_freeze(obj)
+    expect(obj.foo).to eq 1
+    expect(obj.foo).to eq 1
+    expect($called).to eq 1
+    expect(obj.send(:ractor_cache)).to eq({foo: 1})
+  end
+end
